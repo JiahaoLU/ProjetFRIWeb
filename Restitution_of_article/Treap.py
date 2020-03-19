@@ -1,3 +1,11 @@
+# encoding: utf-8
+"""
+@author: Jiahao LU
+@contact: lujiahao8146@gmail.com
+@file: Main.py
+@time: 2020/3/19
+@desc:
+"""
 from typing import Tuple, List, Iterator, Generator
 
 
