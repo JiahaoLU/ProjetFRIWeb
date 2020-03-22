@@ -10,8 +10,8 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-from InvertedIndex import InvertedIndex, PostingList, get_terms_in_bag
-from QueryModule import BoolModule, clean_query, VectorialModule
+from Project.InvertedIndex import InvertedIndex, PostingList, get_terms_in_bag
+from Project.QueryModule import BoolModule, clean_query, VectorialModule, TreapModule
 import pickle as pkl
 import requests, zipfile, io
 from tqdm import tqdm
@@ -95,6 +95,7 @@ class Module:
             raise ValueError('No search module is ready.')
         if not self.f_exists(result_dir) or os.path.isfile(result_dir):
             os.mkdir(result_dir)
+        print(self.qm)
         query = input('<<<DocQ research>>>Please enter your keywords: ')
         query_mark = ''.join([c for c in query if c.isalpha()])
         if query != '':
@@ -136,7 +137,9 @@ class Module:
             self.qm = BoolModule('')
         elif args.qm == 'vectorial':
             self.qm = VectorialModule('')
-        iidir = 'Inverted_index_cs276' if args.iidir is None else args.iidir
+        elif args.qm == 'treap':
+            self.qm = TreapModule('')
+        iidir = 'Project/Inverted_index_cs276' if args.iidir is None else args.iidir
         self.run_ii_module(iidir, args.cdir, args.gi, args.itype, args.rmsw)
         while True:
             self.run_search_module(args.rdir)
@@ -149,3 +152,11 @@ if __name__ == '__main__':
     m = Module()
     m.main()
     sys.exit(0)
+    # m.qm = TreapModule('')
+    # iidir = 'Project/Inverted_index_cs276'
+    # m.run_ii_module(iidir, None, False, itype='freq', rm_stpw=False)
+    # while True:
+    #     m.run_search_module('results')
+    #     leave = input('Continue? y/n')
+    #     if leave == 'n':
+    #         break

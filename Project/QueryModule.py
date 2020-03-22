@@ -7,14 +7,16 @@
 @desc:
 """
 from tt import BooleanExpression
-from InvertedIndex import PostingList, InvertedIndex, clean_lemmatize_count
-from typing import List, TypeVar, Tuple
+from Project.InvertedIndex import PostingList, InvertedIndex, clean_lemmatize_count
+from typing import List, TypeVar, Tuple, Iterable, Dict
 from abc import ABC, abstractmethod
 from collections import Counter
 from math import sqrt
+from Restitution_of_article.Treap import Treap
+from Restitution_of_article.FastQuery import intersection, union
 
 
-def clean_query(q: str):
+def clean_query(q: str) -> str:
     lemma_words = clean_lemmatize_count(q.split(' '))
     return ' '.join(lemma_words)
 
@@ -25,6 +27,9 @@ class QueryModule(object):
     def __init__(self, query: str):
         self.query = query
 
+    def __str__(self):
+        return ''
+
     @abstractmethod
     def get_result(self, context: T):
         pass
@@ -33,6 +38,9 @@ class QueryModule(object):
 class BoolModule(QueryModule):
     def __init__(self, query: str):
         super().__init__(query)
+
+    def __str__(self):
+        return 'Using BoolModule. Compatible with boolean queries\nwith and/or/not.'
 
     def get_result(self, inverted_index: InvertedIndex) -> List[str]:
         bool_operators = {'and', 'or', 'not'}
@@ -89,6 +97,9 @@ class VectorialModule(QueryModule):
     def __init__(self, query: str):
         super().__init__(query)
 
+    def __str__(self):
+        return 'Using VectorialModule.'
+
     def get_result(self, ii: InvertedIndex) -> List[str]:
         if ii.iitype not in {'freq', 'pos'}:
             raise ValueError('Inverted index must has frequencies for vectorial module.')
@@ -124,6 +135,51 @@ class VectorialModule(QueryModule):
             dict[key] = acc
         else:
             dict[key] += acc
+
+
+class TreapModule(QueryModule):
+
+    def __init__(self, query: str):
+        super().__init__(query)
+
+    def __str__(self):
+        return 'Using TreapModule. Add u + /space/ at the beginning of query if it is a union query.'
+
+    def get_result(self, ii: InvertedIndex):
+        if self.is_union():
+            self.query = self.query[2:]
+        print('generating treaps...')
+        treaps = self.build_treaps(ii)
+        print('Searching ...')
+        if self.is_union():
+            res = union(self.query.split(' '), treaps, k=100, D=ii.D)
+        else:
+            res = intersection(self.query.split(' '), treaps, k=100, D=ii.D)
+        for doc, score in res:
+            try:
+                print("Local doc id = %s, score = %.5f" % (str(doc), score))
+                yield ii.get_doc_url(doc)
+            except [AttributeError, KeyError]:
+                continue
+
+    def is_union(self):
+        return self.query[0] == 'u' and self.query[1] == ' '
+
+    def build_treaps(self, ii: InvertedIndex) -> Dict[str, Tuple[int, Treap]]:
+        treaps = dict()
+        for term in self.query.split(' '):
+            tree = Treap()
+            try:
+                for pair in ii[term].indexation:
+                    if type(pair) == int:
+                        tree.insert((pair, 1))
+                    else:
+                        tree.insert((pair[0], pair[1]))
+                treaps[term] = (ii[term].df, tree)
+            except:
+                print('Warning while building treap for keyword \'%s\'.' % term)
+                continue
+        return treaps
 
 
 if __name__ == '__main__':

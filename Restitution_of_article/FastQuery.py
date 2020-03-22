@@ -6,7 +6,7 @@
 @time: 2020/3/19
 @desc:
 """
-from Treap import TNode, Treap
+from Restitution_of_article.Treap import TNode, Treap
 from typing import Tuple, List, Iterator, Generator, Iterable, Dict
 from math import log10
 from copy import copy
@@ -28,13 +28,16 @@ def intersection(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> L
     stacks = dict(zip(Q, [[TNode((D, D))] for _ in range(len(Q))]))
     vt = dict(zip(Q, [treaps[t][1].root for t in Q]))
     U = sum([treaps[t][0] * vt[t].priority for t in Q])
-    print("\n---initialisation---\nU = {0},\nstacks = {1},\nvt = {2}".format(U, stacks, vt))
+    # print("\n---initialisation---\nU = {0},\nstacks = {1},\nvt = {2}".format(U, stacks, vt))
     d = 1
     L = -100000
 
     # local functions
     def id_top_stack_t(t: str) -> int:
-        return stacks[t][-1].id
+        if stacks[t]:
+            return stacks[t][-1].id
+        else:
+            return D + 1
 
     def changev(t: str, v: TNode):
         nonlocal U, vt, D
@@ -44,11 +47,9 @@ def intersection(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> L
     def changed(newd: int):
         nonlocal Q, d
         d = newd
-        print("next document = ", d)
+        # print("next document = ", d)
         for t in Q:
             v = vt[t]
-            if not stacks[t]:
-                return
             while d >= id_top_stack_t(t):
                 v = stacks[t].pop(-1)
             changev(t, v)
@@ -93,7 +94,8 @@ def intersection(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> L
                     changev(t, stacks[t].pop(-1))
                     changed(vt[t].id)
     result.reverse()
-    return result
+    for res in result:
+        yield res
 
 
 def union(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> List[Tuple[int, float]]:
@@ -102,17 +104,18 @@ def union(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> List[Tup
     result = list()
     stacks = dict(zip(next_Q, [[TNode((D, D))] for _ in range(len(next_Q))]))
     vt = dict(zip(next_Q, [treaps[t][1].root for t in next_Q]))
-    # U = sum([treaps[t][0] * vt[t].priority for t in Q])
     U = 0
-    # nextdt = dict(zip(Q, [treaps[t][1].root.id for t in Q]))
     nextdt = dict(zip(next_Q, [treaps[t][1].search_min_id() for t in next_Q]))
-    print("\n---initialisation---\nU = {0},\nstacks = {1},\nvt = {2}".format(U, stacks, vt))
+    # print("\n---initialisation---\nU = {0},\nstacks = {1},\nvt = {2}".format(U, stacks, vt))
     d = 1
     L = -100000
 
     # local functions
     def id_top_stack_t(t: str) -> int:
-        return stacks[t][-1].id
+        if stacks[t]:
+            return stacks[t][-1].id
+        else:
+            return D + 1
 
     def changev(t: str, v: TNode):
         nonlocal U, vt, d, D
@@ -123,7 +126,7 @@ def union(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> List[Tup
     def changed(newd: int):
         nonlocal next_Q, d
         d = newd
-        print("next document = ", d)
+        # print("next document = ", d)
         for t in next_Q:
             nextdt[t] = max(nextdt[t], newd)
             v = vt[t]
@@ -185,11 +188,12 @@ def union(Q: Iterable[str], treaps: Dict, k: int = 3, D: int = 1000) -> List[Tup
                     changev(t, stacks[t].pop(-1))
                     nextdt[t] = vt[t].id
     result.reverse()
-    return result
+    for res in result:
+        yield res
 
 
 if __name__ == "__main__":
-    Query = ["realistic", "marxism", "conflict"]
+    Query = ["realistic"]#, "marxism", "conflict"]
     fake_posting_lists = {
         ('realistic', 5): {(71, 4), (163, 1), (326, 1), (332, 1), (381, 1), (365, 3)},
         ('conflict', 15): {(71, 1), (163, 1), (204, 1), (268, 5), (297, 1), (320, 1),

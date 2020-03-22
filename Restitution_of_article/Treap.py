@@ -7,6 +7,7 @@
 @desc:
 """
 from typing import Tuple, List, Iterator, Generator
+import pickle
 
 
 class GNode(object):
@@ -205,7 +206,8 @@ if __name__ == "__main__":
     print("treap height = ", TREAP.height)
     TREAP.root.display()
     print("min id = ", TREAP.search_min_id())
-
+    with open('saved_treap', 'wb') as st:
+        pickle.dump(TREAP, st)
     GENERAL_TREE = Gtree()
     GENERAL_TREE.compress_treap(TREAP.root, GENERAL_TREE.fake_root_for_treap(TREAP.root))
     GENERAL_TREE.root.display()

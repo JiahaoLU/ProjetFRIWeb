@@ -163,7 +163,7 @@ class InvertedIndex(dict):
         try:
             return super().__getitem__(item)
         except KeyError:
-            print('term not found')
+            print('Keyword \'%s\' not found in document.' % item)
             return PostingList()
 
     def get_inverted_index(self, doc_id, doc_bag, itype='freq'):
@@ -219,7 +219,6 @@ class InvertedIndex(dict):
             return log10(self.D / self.__getitem__(term).df)
         except KeyError:
             print('Keyword not found.')
-
 
 
 if __name__ == '__main__':
