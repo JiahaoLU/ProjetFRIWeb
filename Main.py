@@ -109,7 +109,7 @@ class Module:
                 print('--- result in %s ---' % str(repo))
                 for res in self.qm.get_result(ii):
                     resf.write(res + '\n')
-        print('Results saved in %s' % result_dir)
+        print('Results saved in \'./%s\'.' % result_dir)
 
     def main(self):
         parser = argparse.ArgumentParser(
@@ -132,7 +132,11 @@ class Module:
 
         args = parser.parse_args()
         if args.gi and args.cdir is None:
-            raise ValueError('Collection directory could not be None if generate new inverted index.')
+            print('Collection directory could not be found if generate new inverted index.\
+             A default one will be created')
+            cdir = 'Collection_default'
+        else:
+            cdir = args.cdir
         if args.qm == 'bool':
             self.qm = BoolModule('')
         elif args.qm == 'vectorial':
@@ -140,7 +144,7 @@ class Module:
         elif args.qm == 'treap':
             self.qm = TreapModule('')
         iidir = 'Project/Inverted_index_cs276' if args.iidir is None else args.iidir
-        self.run_ii_module(iidir, args.cdir, args.gi, args.itype, args.rmsw)
+        self.run_ii_module(iidir, cdir, args.gi, args.itype, args.rmsw)
         while True:
             self.run_search_module(args.rdir)
             leave = input('Continue? y/n')

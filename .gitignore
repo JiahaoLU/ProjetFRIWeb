@@ -5,6 +5,8 @@ __pycache__/
 .idea/
 Project/Collection_cs276/
 Project/Inverted_index_s/
+Project/result/
+Project/results/
 # Project/Collection/
 # C extensions
 *.so
