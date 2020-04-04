@@ -21,6 +21,7 @@ import sys
 
 class Module:
     def __init__(self):
+        self.qm_name = ''
         self.ii = {}
         self.qm = None
 
@@ -90,24 +91,25 @@ class Module:
             else:
                 raise FileNotFoundError('Inverted index file not found.')
 
-    def run_search_module(self, result_dir: str):
+    def run_search_module(self, result_dir: str, nbest: int):
         if self.qm is None:
             raise ValueError('No search module is ready.')
         if not self.f_exists(result_dir) or os.path.isfile(result_dir):
             os.mkdir(result_dir)
         print(self.qm)
         query = input('<<<DocQ research>>>Please enter your keywords: ')
-        query_mark = ''.join([c for c in query if c.isalpha()])
+        query_mark = ''.join([c for c in query if c.isalpha() or c.isdigit()])
+        query_mark = query_mark[:min(len(query_mark), 10)]
         if query != '':
             self.qm.query = clean_query(query)
         else:
             return
         with open(
-                result_dir + '/' + query_mark + time.strftime(".%H.%M.%S", time.localtime()) + '.txt',
-                'a+') as resf:
+                result_dir + '/' + self.qm_name + '.' + query_mark
+                + time.strftime(".%H.%M.%S", time.localtime()) + '.out', 'a+') as resf:
             for repo, ii in self.ii.items():
                 print('--- result in %s ---' % str(repo))
-                for res in self.qm.get_result(ii):
+                for res in tqdm(iterable=self.qm.get_result(ii, nbest), total=len(list(self.qm.get_result(ii, nbest)))):
                     resf.write(res + '\n')
         print('Results saved in \'./%s\'.' % result_dir)
 
@@ -129,6 +131,8 @@ class Module:
                             help='Type of inverted index: doc/freq/pos')
         parser.add_argument('--rmsw', action='store_true',
                             help='True if stop words need to be removed.')
+        parser.add_argument('--nbest', default=8000, type=int,
+                            help='The maximum number of answers stored for each sub-collection.')
 
         args = parser.parse_args()
         if args.gi and args.cdir is None:
@@ -143,10 +147,14 @@ class Module:
             self.qm = VectorialModule('')
         elif args.qm == 'treap':
             self.qm = TreapModule('')
+        else:
+            raise ValueError('Please give a valid model name: bool/vectorial/treap')
+        self.qm_name = args.qm
         iidir = 'Project/Inverted_index_cs276' if args.iidir is None else args.iidir
+        print('Start loading files... please wait')
         self.run_ii_module(iidir, cdir, args.gi, args.itype, args.rmsw)
         while True:
-            self.run_search_module(args.rdir)
+            self.run_search_module(args.rdir, args.nbest)
             leave = input('Continue? y/n')
             if leave == 'n':
                 break

@@ -31,7 +31,7 @@ class QueryModule(object):
         return ''
 
     @abstractmethod
-    def get_result(self, context: T):
+    def get_result(self, context: T, nbest: int):
         pass
 
 
@@ -42,7 +42,7 @@ class BoolModule(QueryModule):
     def __str__(self):
         return 'Using BoolModule. Compatible with boolean queries\nwith and/or/not.'
 
-    def get_result(self, inverted_index: InvertedIndex) -> List[str]:
+    def get_result(self, inverted_index: InvertedIndex, nbest: int) -> List[str]:
         bool_operators = {'and', 'or', 'not'}
         try:
             postfix = self._transform_bool_query_to_postfix()
@@ -67,7 +67,8 @@ class BoolModule(QueryModule):
                     default_operand.indexation = self._merge_postings_list('')
                     operands.append(default_operand)
         for i in operands.pop(-1).indexation:
-            print(inverted_index.get_doc_url(i))
+            # print(inverted_index.get_doc_url(i))
+
             yield inverted_index.get_doc_url(i)
 
     def _transform_query_to_boolean(self) -> List:
@@ -100,7 +101,7 @@ class VectorialModule(QueryModule):
     def __str__(self):
         return 'Using VectorialModule.'
 
-    def get_result(self, ii: InvertedIndex) -> List[str]:
+    def get_result(self, ii: InvertedIndex, nbest: int) -> List[str]:
         if ii.iitype not in {'freq', 'pos'}:
             raise ValueError('Inverted index must has frequencies for vectorial module.')
         norm_q = 0
@@ -119,8 +120,8 @@ class VectorialModule(QueryModule):
                 self.dict_accumulate(dict=scores, key=doc, acc=w_q * w_d)
         for doc in scores.keys():
             scores[doc] /= (sqrt(norm_q) * sqrt(norm_d[doc]))
-        for doc, score in self.get_descending_scores(scores):
-            print("Local doc id = %s, score = %.5f" % (str(doc), score))
+        for doc, score in self.get_descending_scores(scores, nbest):
+            # print("Local doc id = %s, score = %.5f" % (str(doc), score))
             yield ii.get_doc_url(doc)
 
     def get_query_vector(self) -> Counter:
@@ -128,7 +129,7 @@ class VectorialModule(QueryModule):
 
     def get_descending_scores(self, scores: dict, threshold: int = 100) -> List[Tuple[int, float]]:
         pair = sorted(list(scores.items()), key=(lambda x: x[1]), reverse=True)
-        return pair[:threshold]
+        return pair[:min(len(pair), threshold)]
 
     def dict_accumulate(self, key, dict: dict, acc):
         if key not in dict.keys():
@@ -145,19 +146,19 @@ class TreapModule(QueryModule):
     def __str__(self):
         return 'Using TreapModule. Add u + /space/ at the beginning of query if it is a union query.'
 
-    def get_result(self, ii: InvertedIndex):
+    def get_result(self, ii: InvertedIndex, nbest: int):
         if self.is_union():
             self.query = self.query[2:]
         print('generating treaps...')
         treaps = self.build_treaps(ii)
         print('Searching ...')
         if self.is_union():
-            res = union(self.query.split(' '), treaps, k=100, D=ii.D)
+            res = union(self.query.split(' '), treaps, k=nbest, D=ii.D)
         else:
-            res = intersection(self.query.split(' '), treaps, k=100, D=ii.D)
+            res = intersection(self.query.split(' '), treaps, k=nbest, D=ii.D)
         for doc, score in res:
             try:
-                print("Local doc id = %s, score = %.5f" % (str(doc), score))
+                # print("Local doc id = %s, score = %.5f" % (str(doc), score))
                 yield ii.get_doc_url(doc)
             except [AttributeError, KeyError]:
                 continue
