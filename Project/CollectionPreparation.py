@@ -5,6 +5,14 @@ import random
 
 
 def cut_test_doc(src_folder='Collection_cs276', folder='Collection', num_per_index=50, randomly=False):
+    """
+    Get a smaller collection from original one for sake of code test
+    :param src_folder:
+    :param folder:
+    :param num_per_index: number of document to retrieve
+    :param randomly: random selection or not
+    :return:
+    """
     cur_dir = os.getcwd()
     src_dir = cur_dir + '\\' + src_folder + '\\'
     new_dir = cur_dir + '\\' + folder + '\\'

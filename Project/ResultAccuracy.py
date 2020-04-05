@@ -4,7 +4,7 @@
 @contact: lujiahao8146@gmail.com
 @file: ResultAccuracy.py
 @time: 2020/4/4
-@desc:
+@desc: The function to check result accuracy comparing with corrected query output.
 """
 from typing import Tuple
 

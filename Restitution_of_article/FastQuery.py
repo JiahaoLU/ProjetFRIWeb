@@ -4,7 +4,7 @@
 @contact: lujiahao8146@gmail.com
 @file: Main.py
 @time: 2020/3/19
-@desc:
+@desc: Implementation of algorithms from article "Faster and Smaller Inverted Indices with Treaps" by Roberto Konow, al.
 """
 from Restitution_of_article.Treap import TNode, Treap
 from typing import Tuple, List, Iterator, Generator, Iterable, Dict
@@ -13,6 +13,11 @@ from copy import copy
 
 
 def build_treaps(posting_lists):
+    """
+    Build treaps for all terms in the query list
+    :param posting_lists:
+    :return:
+    """
     treaps = dict()
     for key, posting in posting_lists.items():
         tree = Treap()

@@ -11,6 +11,9 @@ import pickle
 
 
 class GNode(object):
+    """
+    General tree node. The number of children is uncertain.
+    """
     def __init__(self, key):
         self.key = key
         self._children = []
@@ -28,6 +31,11 @@ class GNode(object):
 
     @children.setter
     def children(self, baby):
+        """
+        Setter of children. Append a new child to the children list
+        :param baby:
+        :return:
+        """
         if baby is None:
             self._children.append(baby)
         else:
@@ -36,6 +44,12 @@ class GNode(object):
             baby.parent = self
 
     def display(self, _prefix="", _last=True):
+        """
+        Print tree
+        :param _prefix:
+        :param _last:
+        :return:
+        """
         print(_prefix, "\\- " if _last else "|- ", self, sep="")
         _prefix += "     " if _last else "|    "
         child_count = len(self.children)
@@ -44,6 +58,12 @@ class GNode(object):
             child.display(_prefix, _last)
 
     def parentheses_presentation(self):
+        """
+        Display the tree by parentheses presentation obtained by a preorder traversal
+        where we append an opening parenthesis when reaching a
+        node and a closing parenthesis when leaving it.
+        :return:
+        """
         if not self.children:
             print('()', end='')
         else:
@@ -55,6 +75,10 @@ class GNode(object):
 
 
 class TNode(GNode):
+    """
+    Treap node which has at most two children, named left and right
+    and a value of priority
+    """
     def __init__(self, pair: Tuple[int, int]):
         super().__init__(pair)
         self.id = pair[0]  # (id, tf)
@@ -63,17 +87,30 @@ class TNode(GNode):
         self.right = None
 
     def __repr__(self):
+        """
+        The node is represented by id-priority-left_id-right_id
+        :return:
+        """
         return "{0}-{1}-{2}-{3}".format(self.id, self.priority,
                                         (self.left.id if self.left is not None else 'N'),
                                         (self.right.id if self.right is not None else 'N'))
 
     def display(self):
+        """
+        Print tree beautifully
+        :return:
+        """
         lines, _, _, _ = self._display_aux()
         for line in lines:
             print(line)
 
     def _display_aux(self):
-        """Returns list of strings, width, height, and horizontal coordinate of the root."""
+        """
+        Print tree by implementing method on
+        https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python/340
+        Returns list of strings, width, height, and horizontal coordinate of the root.
+        :return:
+        """
         s = self.__str__()
         u = len(s)
         # No child.
@@ -118,6 +155,11 @@ class Treap(object):
         self.height = 0
 
     def insert(self, init_value: Tuple[int, int]):
+        """
+        Insert a new node into treap by split method
+        :param init_value:
+        :return:
+        """
         new_node = TNode(init_value)
         if self.root is None:
             self.root = new_node
@@ -128,6 +170,12 @@ class Treap(object):
         self.height = self.get_height(self.root)
 
     def split(self, joint: TNode, key: int) -> Tuple[TNode, TNode]:
+        """
+        Split tree into left sub tree and right sub tree
+        :param joint:
+        :param key:
+        :return:
+        """
         if joint is None:
             return None, None
         if joint.id > key:
@@ -138,6 +186,12 @@ class Treap(object):
             return joint, right
 
     def merge(self, left: TNode, right: TNode) -> TNode:
+        """
+        Merge two sub trees into one
+        :param left:
+        :param right:
+        :return:
+        """
         if left is None:
             return right
         elif right is None:
@@ -150,11 +204,20 @@ class Treap(object):
             return right
 
     def get_height(self, node: TNode) -> int:
+        """
+        get height of the tree
+        :param node:
+        :return:
+        """
         if node is None:
             return 0
         return max(1, self.get_height(node.left) + 1, self.get_height(node.right) + 1)
 
     def search_min_id(self) -> int:
+        """
+        Get the minimal id in the tree
+        :return:
+        """
         node = self.root
         while node.left is not None:
             node = node.left
@@ -166,12 +229,25 @@ class Gtree:
         self.root = root
 
     def fake_root_for_treap(self, treap_root: TNode):
+        """
+        Generate fake root for treap compression
+        :param treap_root:
+        :return:
+        """
         self.root = GNode('vr')
         tr = GNode((treap_root.id, treap_root.priority))
         self.root.children = tr
         return tr
 
     def compress_treap(self, tnode: TNode, gnode: GNode):
+        """
+        Compress treap into a normal tree
+        The left child of a treap node is its first child in the general tree.
+        The right child of a treap node is its next sibling in the general tree.
+        :param tnode: Current treap node
+        :param gnode: The general node corresponding to the current treap node
+        :return:
+        """
         if tnode.left is None and tnode.right is None:
             return
         if tnode.left is not None:

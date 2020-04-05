@@ -4,7 +4,7 @@
 @contact: lujiahao8146@gmail.com
 @file: QueryModule.py
 @time: 2020/3/20
-@desc:
+@desc: Different query modules here
 """
 from tt import BooleanExpression
 from Project.InvertedIndex import PostingList, InvertedIndex, clean_lemmatize_count
@@ -17,6 +17,11 @@ from Restitution_of_article.FastQuery import intersection, union
 
 
 def clean_query(q: str) -> str:
+    """
+    Get cleaned, lemmatized and lower cased query string
+    :param q:
+    :return:
+    """
     lemma_words = clean_lemmatize_count(q.split(' '))
     return ' '.join(lemma_words)
 
@@ -72,13 +77,28 @@ class BoolModule(QueryModule):
             yield inverted_index.get_doc_url(i)
 
     def _transform_query_to_boolean(self) -> List:
+        """
+        Transform natural language into postfix token list
+        :return:
+        """
         return BooleanExpression(self.query.lower().replace(' ', ' and ')).postfix_tokens
 
     def _transform_bool_query_to_postfix(self) -> List:
+        """
+        Transform boolean expression into postfix token list
+        :return:
+        """
         return BooleanExpression(self.query.lower()).postfix_tokens
 
     def _merge_postings_list(self, bool_operator: str,
                              posting_term1: PostingList = None, posting_term2: PostingList = None) -> List:
+        """
+        Get list of document ids in combining two posting lists according to tne boolean operator
+        :param bool_operator:
+        :param posting_term1:
+        :param posting_term2:
+        :return:
+        """
         docs1 = [pos[0] if type(pos) != int else pos for pos in posting_term1.indexation]\
             if posting_term1 is not None else []
         docs2 = [pos[0] if type(pos) != int else pos for pos in posting_term2.indexation]\
@@ -104,20 +124,20 @@ class VectorialModule(QueryModule):
     def get_result(self, ii: InvertedIndex, nbest: int) -> List[str]:
         if ii.iitype not in {'freq', 'pos'}:
             raise ValueError('Inverted index must has frequencies for vectorial module.')
-        norm_q = 0
-        norm_d = dict()
-        scores = dict()
-        vector_q = self.get_query_vector()
-        for term_q, tf_q in vector_q.items():
+        norm_q = 0  # query norm
+        norm_d = dict()  # document norms
+        scores = dict()  # document scores
+        vector_q = self.get_query_vector()  # query vector
+        for term_q, tf_q in vector_q.items():  # loop on each term in query
             if term_q not in ii.keys():
                 continue
-            w_q = tf_q * ii.idf(term_q)
-            norm_q += w_q * w_q
+            w_q = tf_q * ii.idf(term_q)  # query term weight = tf * idf
+            norm_q += w_q * w_q  # norm = sqrt(sum(weight^2))
             for doc_pos in ii[term_q].indexation:
                 doc, tf_d = doc_pos[0], doc_pos[1]
-                w_d = tf_d * ii.idf(term_q)
-                self.dict_accumulate(dict=norm_d, key=doc, acc=w_d * w_d)
-                self.dict_accumulate(dict=scores, key=doc, acc=w_q * w_d)
+                w_d = tf_d * ii.idf(term_q)  # document term weight = tf * idf
+                self.dict_accumulate(dict=norm_d, key=doc, acc=w_d * w_d)  # update document norm
+                self.dict_accumulate(dict=scores, key=doc, acc=w_q * w_d)  # update document weight
         for doc in scores.keys():
             scores[doc] /= (sqrt(norm_q) * sqrt(norm_d[doc]))
         for doc, score in self.get_descending_scores(scores, nbest):
@@ -125,13 +145,30 @@ class VectorialModule(QueryModule):
             yield ii.get_doc_url(doc)
 
     def get_query_vector(self) -> Counter:
+        """
+        Transform the query into vector represented by a counter of term frequencies
+        :return:
+        """
         return Counter(self.query.split(' '))
 
     def get_descending_scores(self, scores: dict, threshold: int = 100) -> List[Tuple[int, float]]:
+        """
+        sort the doc list by scores and intercept the first threshold-th results
+        :param scores:
+        :param threshold:
+        :return:
+        """
         pair = sorted(list(scores.items()), key=(lambda x: x[1]), reverse=True)
         return pair[:min(len(pair), threshold)]
 
     def dict_accumulate(self, key, dict: dict, acc):
+        """
+        Function for updating dictionary
+        :param key:
+        :param dict:
+        :param acc:
+        :return:
+        """
         if key not in dict.keys():
             dict[key] = acc
         else:
@@ -153,8 +190,10 @@ class TreapModule(QueryModule):
         treaps = self.build_treaps(ii)
         print('Searching ...')
         if self.is_union():
+            # function from Restitution_of_article.FastQuery
             res = union(self.query.split(' '), treaps, k=nbest, D=ii.D)
         else:
+            # function from Restitution_of_article.FastQuery
             res = intersection(self.query.split(' '), treaps, k=nbest, D=ii.D)
         for doc, score in res:
             try:
@@ -164,9 +203,18 @@ class TreapModule(QueryModule):
                 continue
 
     def is_union(self):
+        """
+        Check if the query is a union one or an intersection one
+        :return:
+        """
         return self.query[0] == 'u' and self.query[1] == ' '
 
     def build_treaps(self, ii: InvertedIndex) -> Dict[str, Tuple[int, Treap]]:
+        """
+        Build treaps for terms in query
+        :param ii: already known inverted index
+        :return:
+        """
         treaps = dict()
         for term in self.query.split(' '):
             tree = Treap()
