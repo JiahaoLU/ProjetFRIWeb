@@ -29,6 +29,8 @@ Répertoire pour le projet et la restitution d'article du cours FRI-Web
                  collection.
   --itype ITYPE  Type of inverted index: doc/freq/pos
   --rmsw         True if stop words need to be removed.
+  --nbest NBEST  The maximum number of answers stored for each sub-collection.
+
 
   Quick start:
     $ python Main.py --qm vectorial --rdir results
