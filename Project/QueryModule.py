@@ -30,10 +30,18 @@ class QueryModule(object):
     T = TypeVar('T')
 
     def __init__(self, query: str):
-        self.query = query
+        self._query = query
 
     def __str__(self):
         return ''
+
+    @property
+    def query(self):
+        return self._query
+
+    @query.setter
+    def query(self, q: str):
+        self._query = q
 
     @abstractmethod
     def get_result(self, context: T, nbest: int):
@@ -139,7 +147,7 @@ class VectorialModule(QueryModule):
                 self.dict_accumulate(dict=norm_d, key=doc, acc=w_d * w_d)  # update document norm
                 self.dict_accumulate(dict=scores, key=doc, acc=w_q * w_d)  # update document weight
         for doc in scores.keys():
-            scores[doc] /= (sqrt(norm_q) * sqrt(norm_d[doc]))
+            scores[doc] /= (sqrt(norm_q) * sqrt(norm_d[doc]))  # cosine similarity
         for doc, score in self.get_descending_scores(scores, nbest):
             # print("Local doc id = %s, score = %.5f" % (str(doc), score))
             yield ii.get_doc_url(doc)
@@ -179,22 +187,27 @@ class TreapModule(QueryModule):
 
     def __init__(self, query: str):
         super().__init__(query)
+        self.is_u = False
+        self.treaps = dict()
 
     def __str__(self):
         return 'Using TreapModule. Add u + /space/ at the beginning of query if it is a union query.'
 
-    def get_result(self, ii: InvertedIndex, nbest: int):
+    @QueryModule.query.setter
+    def query(self, q):
+        self._query = q
+        self.is_u = self.is_union()
         if self.is_union():
             self.query = self.query[2:]
-        print('generating treaps...')
-        treaps = self.build_treaps(ii)
+
+    def get_result(self, ii: InvertedIndex, nbest: int):
         print('Searching ...')
-        if self.is_union():
+        if self.is_u:
             # function from Restitution_of_article.FastQuery
-            res = union(self.query.split(' '), treaps, k=nbest, D=ii.D)
+            res = union(self.query.split(' '), self.treaps, k=nbest, D=ii.D)
         else:
             # function from Restitution_of_article.FastQuery
-            res = intersection(self.query.split(' '), treaps, k=nbest, D=ii.D)
+            res = intersection(self.query.split(' '), self.treaps, k=nbest, D=ii.D)
         for doc, score in res:
             try:
                 # print("Local doc id = %s, score = %.5f" % (str(doc), score))
@@ -209,9 +222,10 @@ class TreapModule(QueryModule):
         """
         return self.query[0] == 'u' and self.query[1] == ' '
 
-    def build_treaps(self, ii: InvertedIndex) -> Dict[str, Tuple[int, Treap]]:
+    def build_treaps(self, ii: InvertedIndex):
         """
         Build treaps for terms in query
+        :param q:
         :param ii: already known inverted index
         :return:
         """
@@ -228,7 +242,7 @@ class TreapModule(QueryModule):
             except:
                 print('Warning while building treap for keyword \'%s\'.' % term)
                 continue
-        return treaps
+        self.treaps = treaps
 
 
 if __name__ == '__main__':

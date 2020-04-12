@@ -57,7 +57,7 @@ class GNode(object):
             _last = i == (child_count - 1)
             child.display(_prefix, _last)
 
-    def parentheses_presentation(self):
+    def parentheses_presentation(self) -> str:
         """
         Display the tree by parentheses presentation obtained by a preorder traversal
         where we append an opening parenthesis when reaching a
@@ -65,13 +65,20 @@ class GNode(object):
         :return:
         """
         if not self.children:
-            print('()', end='')
+            # print('()', end='')
+            return '()'
         else:
-            print('(', end='')
+            # print('(', end='')
+            # for child in self.children:
+            #     if child is not None:
+            #         child.parentheses_presentation()
+            # print(')', end='')
+            p = '('
             for child in self.children:
                 if child is not None:
-                    child.parentheses_presentation()
-            print(')', end='')
+                    p += child.parentheses_presentation()
+            p += ')'
+            return p
 
 
 class TNode(GNode):
@@ -260,10 +267,6 @@ class Gtree:
             self.compress_treap(tnode.right, right_sibling)
 
 
-
-
-
-
 if __name__ == "__main__":
     Q = ["realistc", "marxism", "conflict"]
     fake_posting_lists = {
@@ -289,5 +292,5 @@ if __name__ == "__main__":
     GENERAL_TREE.root.display()
 
     print('Parentheses presentation: ', end='')
-    GENERAL_TREE.root.parentheses_presentation()
+    print(GENERAL_TREE.root.parentheses_presentation())
 

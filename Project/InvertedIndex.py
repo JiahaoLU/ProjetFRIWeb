@@ -305,20 +305,32 @@ class InvertedIndex(dict):
 
 
 if __name__ == '__main__':
-    inver_index_path = 'Inverted_index_s'
+    from Restitution_of_article.Treap import Treap, Gtree
+    from copy import deepcopy
+    inver_index_path = 'Inverted_index_treap'
     if not os.path.exists(inver_index_path):
         os.mkdir(inver_index_path)
     stpw_mark = 'nostp'
-    for id_and_bag in get_terms_in_bag('Collection_cs276', do_rm_stpw=True, stop_word_threshold=100):
-        _repo, _doc_id, _bag = id_and_bag
-        _ii = InvertedIndex()
-        _ii.get_inverted_index(_doc_id, _bag, itype='freq')
+    with open('./Inverted_index_cs276/collection.cs276.nostp.freq.0.ii', 'rb') as f:
+        _ii = pkl.load(f)
+        tdict = {}
+        for term, posting in _ii.items():
+            TREAP = Treap()
+            for pair in posting.indexation:
+                TREAP.insert(deepcopy(pair))
+            print("treap height = ", TREAP.height)
 
+            GENERAL_TREE = Gtree()
+            GENERAL_TREE.compress_treap(TREAP.root, GENERAL_TREE.fake_root_for_treap(TREAP.root))
+            tdict[term] = (deepcopy(posting.df), GENERAL_TREE.root.parentheses_presentation())
+            #
+
+        _repo = 0
         print('Inverted index generated for repository %s' % _repo)
         with open(
-                inver_index_path + '/collection.s.' + stpw_mark + '.' + 'freq' + '.' + _repo + '.ii',
+                inver_index_path + '/collection.s.' + stpw_mark + '.' + 'freq' + '.' + str(_repo) + '.ii',
                 'wb') as f:
-            pkl.dump(_ii, f)
+            pkl.dump(tdict, f)
         print('Inverted index %s saved on %s.' % (_repo, inver_index_path))
 
     # with open(inver_index_path + '/collection.s.nostp.freq.0.ii', 'rb') as f:
