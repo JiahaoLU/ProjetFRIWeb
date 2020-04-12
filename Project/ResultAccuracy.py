@@ -22,7 +22,7 @@ def calculate_result_accuracy(correction: str, result: str) -> Tuple[float, int,
 
 
 if __name__ == '__main__':
-    cor, ans_num, total = calculate_result_accuracy('7.out', 'vectorial.thethe19.06.40.out')
+    cor, ans_num, total = calculate_result_accuracy('7.out', 'treap.thethe.22.41.52.out')
     R = cor / total
     P = cor / ans_num
     f1 = 2 * P * R / (P + R)

@@ -12,7 +12,7 @@ STD_INPUT_HANDLE = -10
 STD_OUTPUT_HANDLE = -11
 STD_ERROR_HANDLE = -12
 
-# Windows CMD命令行 字体颜色定义 text colors
+# Windows CMD text colors
 # FOREGROUND_BLACK = 0x00 # black.
 FOREGROUND_DARKBLUE = 0x01 # dark blue.
 # FOREGROUND_DARKGREEN = 0x02 # dark green.
@@ -31,7 +31,7 @@ FOREGROUND_PINK = 0x0d # pink.
 # FOREGROUND_WHITE = 0x0f # white.
 
 
-# Windows CMD命令行 背景颜色定义 background colors
+# Windows CMD background colors
 # BACKGROUND_BLUE = 0x10 # dark blue.
 # BACKGROUND_GREEN = 0x20 # dark green.
 # BACKGROUND_DARKSKYBLUE = 0x30 # dark skyblue.
@@ -68,7 +68,6 @@ def printPink(mess):
     sys.stdout.write(mess.__str__() + '\n')
     resetColor()
 
-# 暗蓝色
 # dark blue
 def printDarkBlue(mess):
     set_cmd_text_color(FOREGROUND_DARKBLUE)
